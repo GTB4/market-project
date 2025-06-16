@@ -9,10 +9,21 @@ def parse_args():
     return parser.parse_args()
 
 def traffic_replay():
+
     args = parse_args()
-    packets = rdpcap(os.path.join("junk_data", args.file))
-    packet_send = 1
+
+    # Get script's folder (backend/)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Build path relative to project root (../junk_data/)
+    pcap_path = os.path.abspath(os.path.join(script_dir, "..", "junk_data", args.file.strip()))
+
+    if not os.path.exists(pcap_path):
+        raise FileNotFoundError(f"PCAP file not found at: {pcap_path}")
+
+    packets = rdpcap(pcap_path)
     lastindex = None
+    packet_send = 1
 
     for i, pkt in enumerate(packets):
         if pkt.haslayer("UDP"):
@@ -36,6 +47,7 @@ def traffic_replay():
                 print(f"Packet number = {packet_send}")
             else:
                 sendp(pkt, iface="Ethernet", verbose=False)
+                # print(f"Packet number = {packet_send}")
 
             packet_send += 1
             lastindex = i
